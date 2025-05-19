@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:solution2/pass_generator.dart';
+import 'package:solution2/models/generator.dart';
 
 class Home extends StatefulWidget {
   const Home({super.key});
@@ -10,15 +10,22 @@ class Home extends StatefulWidget {
 }
 
 class _HomeState extends State<Home> {
-  final PassGenerator = '3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy';
-
+  bool _isObscure = true;
   TextEditingController copyController = TextEditingController();
   TextEditingController pasteController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+  
+  // Password options
+  final bool _useCaps = true;
+  final bool _useSmalls = true;
+  final bool _useNumbers = true;
+  final bool _useSymbols = true;
 
   @override
   void dispose() {
     copyController.dispose();
     pasteController.dispose();
+    _passwordController.dispose();
     super.dispose();
   }
 
@@ -28,102 +35,122 @@ class _HomeState extends State<Home> {
     );
   }
 
+  void _generatePassword() {
+    setState(() {
+      _passwordController.text = PassGenerator().generatePass(12
+        
+      );
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     return Scaffold(
       appBar: AppBar(
-        title: Text(
-          'Generate/Copy/Paste',
+        title: const Text(
+          'Generate a Password',
           style: TextStyle(color: Colors.white),
         ),
         centerTitle: true,
         backgroundColor: const Color.fromARGB(255, 73, 203, 250),
       ),
       body: SingleChildScrollView(
-        child: Column(
-          mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-          children: [
-            SizedBox(height: 30),
-            Container(
-              child: Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.end,
-                children: [
-                  Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Text(
-                        ' Generate new password:',
-                        style: TextStyle(fontWeight: FontWeight.bold),
-                      ),
-                      SizedBox(height: 4.0),
-                      Container(
-                        padding: EdgeInsets.all(15.0),
-                        decoration: BoxDecoration(
-                          border: Border.all(color: const Color.fromARGB(255, 34, 148, 255), width: 2.0),
-                          borderRadius: BorderRadius.circular(15.0),
-                        ),
-                        child: Text(PassGenerator),
-                      ),
-                    ],
-                  ),
-                  SizedBox(width: 20.0),
-                  IconButton(
-                    onPressed: () {
-                      Clipboard.setData(ClipboardData(text: Pass));
-                      _showSnackBar('Wallet address copied!');
-                    },
+        child: Padding(
+          padding: const EdgeInsets.all(24.0),
+          child: Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              // Password Text Field
+              TextField(
+                controller: _passwordController,
+                obscureText: _isObscure,
+                readOnly: true,
+                decoration: InputDecoration(
+                  prefixIcon: const Icon(Icons.lock),
+                  labelText: 'Password',
+                  border: const OutlineInputBorder(),
+                  suffixIcon: IconButton(
                     icon: Icon(
-                      Icons.content_copy,
-                      color: Colors.blue,
+                      _isObscure ? Icons.visibility : Icons.visibility_off,
                     ),
+                    onPressed: () {
+                      setState(() {
+                        _isObscure = !_isObscure;
+                      });
+                    },
+                  ),
+                ),
+              ),
+
+              const SizedBox(height: 20),
+
+              // Password Options
+              
+
+              // Generate Button
+              SizedBox(
+                width: double.infinity,
+                child: ElevatedButton(
+                  onPressed: _generatePassword,
+                  child: const Text('Generate Password'),
+                ),
+              ),
+
+              const SizedBox(height: 30),
+
+              // Copy/Paste Section
+              Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Expanded(
+                    child: TextField(
+                      controller: copyController,
+                      decoration: const InputDecoration(
+                        labelText: 'Copy Text',
+                        border: OutlineInputBorder(),
+                      ),
+                    ),
+                  ),
+                  IconButton(
+                    icon: const Icon(Icons.content_copy, color: Colors.blue),
+                    onPressed: () {
+                      if (_passwordController.text.isEmpty) {
+                        _showSnackBar('Generate a password first!');
+                        return;
+                      }
+                      Clipboard.setData(ClipboardData(text: _passwordController.text));
+                      _showSnackBar('Password copied!');
+                    },
                   ),
                 ],
               ),
-            ),
-            SizedBox(height: 40),
-            Column(
-              children: [
-                Padding(
-                  padding: EdgeInsets.all(20.0),
-                  child: TextField(
-                    decoration: InputDecoration(labelText: 'Copy This Input'),
-                    controller: copyController,
-                  ),
+
+              const SizedBox(height: 20),
+
+              // Paste Section
+              TextField(
+                controller: pasteController,
+                decoration: const InputDecoration(
+                  labelText: 'Paste Here',
+                  border: OutlineInputBorder(),
+                  prefixIcon: Icon(Icons.paste),
                 ),
-                ElevatedButton.icon(
-                  onPressed: () {
-                    Clipboard.setData(ClipboardData(text: copyController.text));
-                    _showSnackBar('Text copied!');
-                  },
-                  label: Text('Copy'),
-                  icon: Icon(Icons.content_copy),
-                ),
-                SizedBox(height: 10),
-                ElevatedButton.icon(
-                  onPressed: () async {
-                    final clipPaste = await Clipboard.getData(Clipboard.kTextPlain);
-                    final text = clipPaste?.text;
-                    if(text == null || text.isEmpty){
-                      _showSnackBar('clipboard is empty');
-                    }
-                    setState(() {
-                      pasteController.text = text! ;
-                    });
-                  },
-                  label: Text('Paste'),
-                  icon: Icon(Icons.paste),
-                ),
-                Padding(
-                  padding: EdgeInsets.symmetric(horizontal: 20.0, vertical: 20.0),
-                  child: TextField(
-                    decoration: InputDecoration(labelText: 'Paste Here'),
-                    controller: pasteController,
-                  ),
-                ),
-              ],
-            ),
-          ],
+              ),
+              ElevatedButton(
+                onPressed: () async {
+                  final data = await Clipboard.getData(Clipboard.kTextPlain);
+                  if (data?.text == null || data!.text!.isEmpty) {
+                    _showSnackBar('Clipboard is empty!');
+                    return;
+                  }
+                  setState(() {
+                    pasteController.text = data.text!;
+                  });
+                },
+                child: const Text('Paste from Clipboard'),
+              ),
+            ],
+          ),
         ),
       ),
     );

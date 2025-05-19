@@ -1,20 +1,13 @@
+import 'dart:math';
+
+import 'package:flutter/gestures.dart';
 import 'package:flutter/material.dart';
 
-class PasswordGenerator extends StatelessWidget {
-
-
-  
-  static const uppercase = "ABCDEFGHIJKLMNOPQRSTUVWXYZ";
-  static const lowercase = "abcdefghijklmnopqrswxyz";
-  static const number = "1234567890";
-  static const specialchar = "~!@#\$%^&*()+-=:;,.?{}[]";
-
-  const PasswordGenerator({super.key});
-  
-  @override
-  Widget build(BuildContext context) {
-    // TODO: implement build
-    throw UnimplementedError();
+class PassGenerator {
+  String generatePass(int length) {
+    const String chars =
+        'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#\$%^&*()_+-=[]{}|;:,.<>?';
+    final Random rnd = Random.secure();
+    return List.generate(length, (index) => chars[rnd.nextInt(chars.length)]).join();
   }
-
 }
